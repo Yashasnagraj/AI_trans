@@ -1,6 +1,6 @@
-# JavaCV Video Transition Engine
+# JavaCV AI-Powered Video Transition Engine
 
-A comprehensive video transition system built with JavaCV and OpenCV, featuring 23 different transition effects for seamless video editing.
+A comprehensive video transition system built with JavaCV and OpenCV, featuring 33+ different transition effects including AI-powered object-aware transitions for seamless video editing.
 
 ## 🎬 Features
 
@@ -41,24 +41,54 @@ A comprehensive video transition system built with JavaCV and OpenCV, featuring 
 - **BLUR_TRANSITION** - Videos blur and crossfade
 - **PIXELATE_TRANSITION** - Videos pixelate and crossfade
 
+#### 🤖 AI-Powered Object-Aware Transitions
+- **OBJECT_REVEAL** - Smart object-based blending using AI segmentation
+- **OBJECT_ZOOM_IN** - Zoom effects focused on detected objects
+- **OBJECT_ZOOM_OUT** - Zoom out effects with object awareness
+- **OBJECT_SLIDE_LEFT** - Slide transitions targeting specific objects
+- **OBJECT_SLIDE_RIGHT** - Object-aware slide effects
+- **OBJECT_FADE_IN** - Fade effects targeting detected objects
+- **OBJECT_FADE_OUT** - Smart fade out with object detection
+- **OBJECT_ROTATE_IN** - Rotation transitions around objects
+- **OBJECT_ROTATE_OUT** - Object-focused rotation effects
+- **OBJECT_SCALE_TRANSITION** - Scaling effects for object regions
+
 ## 🛠 Setup
 
 ### Prerequisites
 - Java 8 or higher
 - JavaCV library (javacv-platform-1.5.8.jar)
+- **NEW**: ONNX Runtime for Java (onnxruntime-1.15.1.jar) - for AI features
+- **OPTIONAL**: YOLOv8 segmentation model (.onnx) - for object detection
 
 ### Installation
+
+#### Option A: Automatic Setup (Recommended)
+```bash
+# Download all dependencies automatically
+download_dependencies.bat
+
+# Compile with AI support
+compile_ai.bat
+```
+
+#### Option B: Manual Setup
 1. Download JavaCV from [GitHub Releases](https://github.com/bytedeco/javacv/releases)
-2. Place `javacv-platform-1.5.8.jar` in the project directory
-3. Compile using the provided batch script or manually
+2. Download ONNX Runtime from [Maven Central](https://repo1.maven.org/maven2/com/microsoft/onnxruntime/onnxruntime/1.15.1/)
+3. (Optional) Download YOLOv8 model from [Ultralytics](https://github.com/ultralytics/yolov8/releases)
+4. Place all JAR files in the project directory
 
 ### Quick Start
 ```bash
-# Compile all files
+# Basic transitions (original functionality)
 compile_and_run.bat video1.mp4 video2.mp4 ./output
 
-# Or compile manually
-javac -cp "javacv-platform-1.5.8.jar" *.java
+# AI-powered transitions
+compile_ai.bat
+java -cp ".;javacv-platform-1.5.8.jar;onnxruntime-1.15.1.jar" AITransitionDemo video1.mp4 video2.mp4 ./ai_output
+
+# With AI model for full object detection
+java -cp ".;javacv-platform-1.5.8.jar;onnxruntime-1.15.1.jar" AITransitionDemo video1.mp4 video2.mp4 ./ai_output yolov8n-seg.onnx
 ```
 
 ## 🚀 Usage
@@ -83,7 +113,7 @@ VideoTransitionEngine engine = new VideoTransitionEngine(1280, 720, 30.0, 60);
 // Define videos and transitions
 List<String> videos = Arrays.asList("video1.mp4", "video2.mp4", "video3.mp4");
 List<TransitionType> transitions = Arrays.asList(
-    TransitionType.CROSSFADE, 
+    TransitionType.CROSSFADE,
     TransitionType.SLIDE_LEFT
 );
 

@@ -15,6 +15,11 @@ public class VideoTransitionEngine {
     private double frameRate = 30.0;
     private int transitionFrames = 30; // 1 second at 30fps
 
+    // AI-powered features
+    private String aiModelPath = null;
+    private TransitionConfig defaultConfig = TransitionConfig.loadPreset("SMOOTH");
+    private boolean enableAIFeatures = false;
+
     public VideoTransitionEngine() {}
 
     public VideoTransitionEngine(int width, int height, double frameRate, int transitionFrames) {
@@ -47,122 +52,133 @@ public class VideoTransitionEngine {
         OpenCVFrameConverter.ToMat converter = new OpenCVFrameConverter.ToMat();
 
         try {
+            // Pre-load all videos to ensure smooth transitions
+            System.out.println("Pre-loading all videos for smooth transitions...");
+            List<List<Mat>> allVideoFrames = new ArrayList<>();
+            
             for (int i = 0; i < inputVideos.size(); i++) {
-                System.out.println("Processing video " + (i + 1) + "/" + inputVideos.size() + ": " + inputVideos.get(i));
-
-                // Process current video
-                FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(inputVideos.get(i));
+                String videoPath = inputVideos.get(i);
+                System.out.println("Loading video " + (i + 1) + "/" + inputVideos.size() + ": " + videoPath);
+                
+                FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(videoPath);
                 grabber.start();
-
-                List<Mat> videoFrames = new ArrayList<>();
+                
+                List<Mat> frames = new ArrayList<>();
                 Frame frame;
-
-                // Read all frames from current video
+                
                 while ((frame = grabber.grabFrame()) != null) {
                     if (frame.image != null) {
                         Mat mat = converter.convert(frame);
                         if (mat != null && !mat.empty()) {
                             Mat resized = VideoProcessor.resizeFrame(mat, outputWidth, outputHeight);
-                            videoFrames.add(resized);
+                            frames.add(resized);
                         }
                     }
                 }
+                
                 grabber.stop();
-
-                if (videoFrames.isEmpty()) {
-                    System.out.println("Warning: No frames found in video " + inputVideos.get(i));
-                    continue;
+                
+                if (frames.isEmpty()) {
+                    System.out.println("Warning: No frames found in video " + videoPath);
+                    // Add a blank frame to prevent errors
+                    frames.add(VideoProcessor.createBlankFrame(outputWidth, outputHeight));
                 }
-
-                // Write video frames (except last few if there's a transition coming)
-                int framesToWrite = videoFrames.size();
+                
+                allVideoFrames.add(frames);
+                System.out.println("Loaded " + frames.size() + " frames from video " + (i + 1));
+            }
+            
+            // Process each video and apply transitions
+            for (int i = 0; i < allVideoFrames.size(); i++) {
+                List<Mat> currentVideoFrames = allVideoFrames.get(i);
+                System.out.println("Processing video " + (i + 1) + "/" + inputVideos.size());
+                
+                // Determine how many frames to write before transition
+                int framesToWrite = currentVideoFrames.size();
                 if (i < inputVideos.size() - 1) {
-                    framesToWrite = Math.max(1, videoFrames.size() - transitionFrames / 2);
+                    framesToWrite = Math.max(1, currentVideoFrames.size() - transitionFrames / 2);
                 }
-
+                
+                // Write main video frames
                 for (int j = 0; j < framesToWrite; j++) {
-                    Frame outputFrame = converter.convert(videoFrames.get(j));
+                    Frame outputFrame = converter.convert(currentVideoFrames.get(j));
                     recorder.record(outputFrame);
                 }
-
+                
                 // Apply transition if not the last video
                 if (i < inputVideos.size() - 1) {
-                    System.out.println("Applying transition: " + transitions.get(i));
-                    applyTransition(videoFrames, inputVideos.get(i + 1), transitions.get(i), recorder, converter);
+                    List<Mat> nextVideoFrames = allVideoFrames.get(i + 1);
+                    System.out.println("Applying transition: " + transitions.get(i) + " between video " + 
+                                      (i + 1) + " and video " + (i + 2));
+                    
+                    // Apply transition between current and next video
+                    applyTransitionBetweenVideos(currentVideoFrames, nextVideoFrames, 
+                                              transitions.get(i), recorder, converter);
                 }
             }
-
         } finally {
             recorder.stop();
         }
 
         System.out.println("Video processing complete: " + outputPath);
     }
-
+    
     /**
-     * Apply transition between current video frames and next video
+     * Apply transition between two videos using their pre-loaded frames
      */
-    private void applyTransition(List<Mat> currentFrames, String nextVideoPath, TransitionType transitionType,
-                               FFmpegFrameRecorder recorder, OpenCVFrameConverter.ToMat converter) throws Exception {
-
+    private void applyTransitionBetweenVideos(List<Mat> currentVideoFrames, List<Mat> nextVideoFrames,
+                                           TransitionType transitionType, FFmpegFrameRecorder recorder,
+                                           OpenCVFrameConverter.ToMat converter) throws Exception {
+        
         // Get last frames from current video
         List<Mat> lastFrames = new ArrayList<>();
-        int startIndex = Math.max(0, currentFrames.size() - transitionFrames / 2);
-        for (int i = startIndex; i < currentFrames.size(); i++) {
-            lastFrames.add(currentFrames.get(i));
+        int startIndex = Math.max(0, currentVideoFrames.size() - transitionFrames / 2);
+        for (int i = startIndex; i < currentVideoFrames.size(); i++) {
+            lastFrames.add(currentVideoFrames.get(i));
         }
-
+        
         // Get first frames from next video
-        FFmpegFrameGrabber nextGrabber = new FFmpegFrameGrabber(nextVideoPath);
-        nextGrabber.start();
-
-        List<Mat> nextFrames = new ArrayList<>();
-        Frame frame;
-        int frameCount = 0;
-
-        while ((frame = nextGrabber.grabFrame()) != null && frameCount < transitionFrames / 2) {
-            if (frame.image != null) {
-                Mat mat = converter.convert(frame);
-                if (mat != null && !mat.empty()) {
-                    Mat resized = VideoProcessor.resizeFrame(mat, outputWidth, outputHeight);
-                    nextFrames.add(resized);
-                    frameCount++;
-                }
-            }
+        List<Mat> firstFrames = new ArrayList<>();
+        int endIndex = Math.min(nextVideoFrames.size(), transitionFrames / 2);
+        for (int i = 0; i < endIndex; i++) {
+            firstFrames.add(nextVideoFrames.get(i));
         }
-        nextGrabber.stop();
-
+        
         // Create transition
         BaseTransition transition = createTransition(transitionType);
-
+        
         // Generate transition frames
-        int totalTransitionFrames = Math.min(transitionFrames, lastFrames.size() + nextFrames.size());
-
+        int totalTransitionFrames = Math.min(transitionFrames, 
+                                          lastFrames.size() + firstFrames.size());
+        
         for (int i = 0; i < totalTransitionFrames; i++) {
             double progress = (double) i / (totalTransitionFrames - 1);
-
+            
             Mat frame1, frame2;
-
+            
             // Determine which frames to use
             if (i < lastFrames.size()) {
                 frame1 = lastFrames.get(i);
             } else {
                 frame1 = lastFrames.get(lastFrames.size() - 1);
             }
-
-            if (i < nextFrames.size()) {
-                frame2 = nextFrames.get(i);
-            } else if (!nextFrames.isEmpty()) {
-                frame2 = nextFrames.get(nextFrames.size() - 1);
+            
+            if (i < firstFrames.size()) {
+                frame2 = firstFrames.get(i);
+            } else if (!firstFrames.isEmpty()) {
+                frame2 = firstFrames.get(firstFrames.size() - 1);
             } else {
                 frame2 = frame1; // Fallback
             }
-
+            
             Mat transitionFrame = transition.applyTransition(frame1, frame2, progress);
             Frame outputFrame = converter.convert(transitionFrame);
             recorder.record(outputFrame);
         }
     }
+
+    // The applyTransition method has been replaced by applyTransitionBetweenVideos
+    // which works with pre-loaded frames for better performance and smoother transitions
 
     /**
      * Create appropriate transition object based on type
@@ -204,6 +220,23 @@ public class VideoTransitionEngine {
             case PIXELATE_TRANSITION:
                 return new EffectTransition(outputWidth, outputHeight, transitionFrames, type);
 
+            // AI-Powered Object-Aware Transitions
+            case OBJECT_REVEAL:
+            case OBJECT_ZOOM_IN:
+            case OBJECT_ZOOM_OUT:
+            case OBJECT_SLIDE_LEFT:
+            case OBJECT_SLIDE_RIGHT:
+            case OBJECT_FADE_IN:
+            case OBJECT_FADE_OUT:
+            case OBJECT_ROTATE_IN:
+            case OBJECT_ROTATE_OUT:
+            case OBJECT_SCALE_TRANSITION:
+                ObjectRevealTransition objectTransition = new ObjectRevealTransition(outputWidth, outputHeight, transitionFrames, type, defaultConfig);
+                if (enableAIFeatures && aiModelPath != null) {
+                    objectTransition.initializeMaskGenerator(aiModelPath);
+                }
+                return objectTransition;
+
             default:
                 return new FadeTransition(outputWidth, outputHeight, transitionFrames, TransitionType.CROSSFADE);
         }
@@ -221,5 +254,38 @@ public class VideoTransitionEngine {
 
     public void setTransitionFrames(int frames) {
         this.transitionFrames = frames;
+    }
+
+    // AI-powered features configuration
+    public void enableAIFeatures(String modelPath) {
+        this.aiModelPath = modelPath;
+        this.enableAIFeatures = true;
+        System.out.println("AI features enabled with model: " + modelPath);
+    }
+
+    public void disableAIFeatures() {
+        this.enableAIFeatures = false;
+        this.aiModelPath = null;
+        System.out.println("AI features disabled");
+    }
+
+    public void setDefaultTransitionConfig(TransitionConfig config) {
+        this.defaultConfig = config;
+    }
+
+    public void setDefaultTransitionConfig(String presetName) {
+        this.defaultConfig = TransitionConfig.loadPreset(presetName);
+    }
+
+    public TransitionConfig getDefaultTransitionConfig() {
+        return defaultConfig;
+    }
+
+    public boolean isAIFeaturesEnabled() {
+        return enableAIFeatures;
+    }
+
+    public String getAIModelPath() {
+        return aiModelPath;
     }
 }
