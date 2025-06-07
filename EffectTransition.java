@@ -24,21 +24,20 @@ public class EffectTransition extends BaseTransition {
     }
     
     /**
-     * Blur transition - frames blur and crossfade
+     * Enhanced blur transition with progressive blur and smooth blending
      */
     private Mat blurTransition(Mat frame1, Mat frame2, double progress) {
         double easedProgress = easeInOut(progress);
         
-        // Calculate blur intensity (peaks at middle of transition)
-        double blurIntensity = 4.0 * progress * (1.0 - progress); // Parabolic curve
-        int kernelSize = Math.max(1, (int)(blurIntensity * 20)) | 1; // Ensure odd number
+        // Calculate blur intensity using improved parabolic curve
+        double blurIntensity = 4.0 * progress * (1.0 - progress);
         
-        // Apply blur to both frames
-        Mat blurredFrame1 = VideoProcessor.applyBlur(frame1, kernelSize);
-        Mat blurredFrame2 = VideoProcessor.applyBlur(frame2, kernelSize);
+        // Apply progressive blur with dynamic kernel sizing
+        Mat blurredFrame1 = VideoProcessor.applyProgressiveBlur(frame1, blurIntensity);
+        Mat blurredFrame2 = VideoProcessor.applyProgressiveBlur(frame2, blurIntensity);
         
-        // Crossfade between blurred frames
-        return VideoProcessor.blendFrames(blurredFrame1, blurredFrame2, easedProgress);
+        // Enhanced crossfade with smooth alpha progression
+        return VideoProcessor.blendFramesSmooth(blurredFrame1, blurredFrame2, easedProgress);
     }
     
     /**

@@ -15,17 +15,20 @@ Enum defining all 23 available transition types:
 - Rotation transitions (2 types)
 - Effect transitions (2 types)
 
-#### 2. **VideoProcessor.java** - Utility Functions
-Core video processing utilities:
+#### 2. **VideoProcessor.java** - Enhanced Utility Functions
+Core video processing utilities with quality improvements:
 - Frame resizing and conversion
-- Blending and masking operations
+- Enhanced blending with smooth cosine alpha progression
+- Progressive blur with dynamic kernel sizing
+- Directional motion blur for whip pan effects
 - Blur and pixelation effects
 - Rotation and scaling
 - Circular mask creation
 
-#### 3. **BaseTransition.java** - Abstract Base Class
+#### 3. **BaseTransition.java** - Enhanced Abstract Base Class
 Provides common functionality for all transitions:
 - Progress calculation and easing functions
+- NEW: Smooth cosine interpolation for natural transitions
 - Standard interface for transition application
 - Configurable transition duration
 
@@ -33,8 +36,9 @@ Provides common functionality for all transitions:
 Specialized classes for each transition category:
 
 **FadeTransition.java**
-- Crossfade, fade in/out, dissolve effects
-- Uses alpha blending for smooth transitions
+- Enhanced crossfade, fade in/out, dissolve effects
+- Smooth cosine interpolation for natural-looking fades
+- Improved alpha blending with seamless visual flow
 
 **SlideTransition.java** 
 - Directional slide effects (left, right, up, down)
@@ -55,8 +59,14 @@ Specialized classes for each transition category:
 - Split transition with rotation phases
 
 **EffectTransition.java**
-- Blur transition with parabolic intensity
+- Enhanced blur transition with progressive blur and dynamic kernel sizing
 - Pixelate transition with dynamic pixel size
+- Smooth alpha progression using cosine interpolation
+
+**WhipPanTransition.java** (NEW)
+- Realistic camera pan transitions with directional motion blur
+- Supports left, right, up, and down pan directions
+- Combined frame translation with motion blur effects
 
 #### 5. **VideoTransitionEngine.java** - Main Processing Engine
 Central orchestrator that:

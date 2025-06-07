@@ -39,6 +39,12 @@ public enum TransitionType {
     IRIS_IN,
     IRIS_OUT,
 
+    // Whip Pan transitions with motion blur
+    WHIP_PAN_LEFT,
+    WHIP_PAN_RIGHT,
+    WHIP_PAN_UP,
+    WHIP_PAN_DOWN,
+
     // AI-Powered Object-Aware Transitions
     OBJECT_REVEAL,
     OBJECT_ZOOM_IN,
