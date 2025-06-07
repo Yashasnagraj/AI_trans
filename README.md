@@ -38,8 +38,14 @@ A comprehensive video transition system built with JavaCV and OpenCV, featuring 
 - **ROTATE_COUNTERCLOCKWISE** - Videos rotate counterclockwise during transition
 
 #### Effect Transitions
-- **BLUR_TRANSITION** - Videos blur and crossfade
+- **BLUR_TRANSITION** - Enhanced progressive blur with dynamic kernel sizing
 - **PIXELATE_TRANSITION** - Videos pixelate and crossfade
+
+#### 📹 Whip Pan Transitions (NEW)
+- **WHIP_PAN_LEFT** - Realistic camera pan left with horizontal motion blur
+- **WHIP_PAN_RIGHT** - Realistic camera pan right with horizontal motion blur
+- **WHIP_PAN_UP** - Realistic camera pan up with vertical motion blur
+- **WHIP_PAN_DOWN** - Realistic camera pan down with vertical motion blur
 
 #### 🤖 AI-Powered Object-Aware Transitions
 - **OBJECT_REVEAL** - Smart object-based blending using AI segmentation
@@ -93,6 +99,12 @@ java -cp ".;javacv-platform-1.5.8.jar;onnxruntime-1.15.1.jar" AITransitionDemo v
 
 ## 🚀 Usage
 
+### Quality Improvements Demo (NEW)
+Experience the enhanced transition quality:
+```bash
+java -cp ".;javacv-platform-1.5.8.jar" QualityImprovementDemo input1.mp4 input2.mp4 ./output
+```
+
 ### Demo Application
 Create demo videos for all transition types:
 ```bash
@@ -121,19 +133,53 @@ List<TransitionType> transitions = Arrays.asList(
 engine.processVideosWithTransitions(videos, transitions, "output.mp4");
 ```
 
+## 🎯 Quality Improvements (Samsung PRISM Internship)
+
+### ✨ Enhanced Transition Quality
+This engine now features professional-grade transition quality with the following improvements:
+
+#### 1. **Smooth Dissolve Transitions**
+- **Issue Resolved**: Eliminated grainy, abrupt pixel transitions
+- **Solution**: Implemented smooth cosine interpolation: `(1 - cos(progress * π)) / 2`
+- **Result**: Natural-looking fades with seamless visual flow
+
+#### 2. **Progressive Blur Transitions**
+- **Issue Resolved**: Static blur kernels causing harsh, uneven results
+- **Solution**: Dynamic kernel sizing with progressive blur intensity
+- **Formula**: `kernelSize = max(3, (int)(blurIntensity * 30) + 1)`
+- **Result**: High-quality, adaptive blur with no visual artifacts
+
+#### 3. **Enhanced Frame Blending**
+- **Issue Resolved**: Visible seams from basic addWeighted blending
+- **Solution**: Cosine-smoothed alpha progression for seamless fusion
+- **Result**: Professional-grade blending across all transition types
+
+#### 4. **Whip Pan Transitions (NEW)**
+- **Feature**: Realistic camera pan simulation with directional motion blur
+- **Directions**: Left, Right, Up, Down
+- **Technique**: Combined frame translation with motion blur
+- **Result**: Dynamic, camera-like transitions emulating natural movement
+
+### 📊 Mathematical Models
+- **Easing Function**: `smoothAlpha = (1 - cos(progress * π)) / 2`
+- **Progressive Blur**: `blurIntensity = 4.0 * progress * (1.0 - progress)`
+- **Motion Blur Kernel**: `kernelSize = max(3, (int)(motionIntensity * 30) + 1)`
+
 ## 📁 File Structure
 
 ```
-├── TransitionType.java          # Enum defining all transition types
-├── VideoProcessor.java          # Utility functions for video processing
-├── BaseTransition.java          # Abstract base class for transitions
-├── FadeTransition.java          # Fade effect implementations
+├── TransitionType.java          # Enum defining all transition types (updated)
+├── VideoProcessor.java          # Enhanced utility functions with new blending methods
+├── BaseTransition.java          # Abstract base class with cosine interpolation
+├── FadeTransition.java          # Enhanced fade effects with smooth interpolation
 ├── SlideTransition.java         # Slide effect implementations
 ├── WipeTransition.java          # Wipe effect implementations
 ├── ZoomTransition.java          # Zoom effect implementations
 ├── RotateTransition.java        # Rotation effect implementations
-├── EffectTransition.java        # Special effect implementations
-├── VideoTransitionEngine.java   # Main processing engine
+├── EffectTransition.java        # Enhanced special effects with progressive blur
+├── WhipPanTransition.java       # NEW: Whip pan transitions with motion blur
+├── VideoTransitionEngine.java   # Main processing engine (updated)
+├── QualityImprovementDemo.java  # NEW: Demo showcasing quality improvements
 ├── TransitionDemo.java          # Demo application
 ├── SimpleTransitionTest.java    # Simple test application
 ├── compile_and_run.bat          # Compilation script

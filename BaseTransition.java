@@ -50,4 +50,11 @@ public abstract class BaseTransition {
     protected double easeOut(double progress) {
         return 1.0 - Math.pow(1.0 - progress, 2.0);
     }
+    
+    /**
+     * Calculate smooth cosine interpolation for natural transitions
+     */
+    protected double cosineInterpolation(double progress) {
+        return (1 - Math.cos(progress * Math.PI)) / 2;
+    }
 }
