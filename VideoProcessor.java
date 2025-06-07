@@ -52,12 +52,69 @@ public class VideoProcessor {
     }
 
     /**
+     * Enhanced frame blending with smooth cosine alpha progression
+     */
+    public static Mat blendFramesSmooth(Mat frame1, Mat frame2, double alpha) {
+        // Apply cosine interpolation for smoother blending
+        double smoothAlpha = (1 - Math.cos(alpha * Math.PI)) / 2;
+        Mat result = new Mat();
+        addWeighted(frame1, 1.0 - smoothAlpha, frame2, smoothAlpha, 0.0, result);
+        return result;
+    }
+
+    /**
      * Apply Gaussian blur to frame
      */
     public static Mat applyBlur(Mat frame, int kernelSize) {
         Mat blurred = new Mat();
         GaussianBlur(frame, blurred, new Size(kernelSize, kernelSize), 0);
         return blurred;
+    }
+
+    /**
+     * Apply progressive blur with dynamic kernel sizing and optional denoising
+     */
+    public static Mat applyProgressiveBlur(Mat frame, double blurIntensity) {
+        // Calculate dynamic kernel size based on intensity
+        int kernelSize = Math.max(3, (int)(blurIntensity * 30) + 1);
+        // Ensure kernel size is odd
+        if (kernelSize % 2 == 0) kernelSize++;
+        
+        Mat blurred = new Mat();
+        GaussianBlur(frame, blurred, new Size(kernelSize, kernelSize), 0);
+        return blurred;
+    }
+
+    /**
+     * Apply directional motion blur for whip pan effects
+     */
+    public static Mat applyMotionBlur(Mat frame, double motionIntensity, String direction) {
+        // Calculate motion blur kernel size
+        int kernelSize = Math.max(3, (int)(motionIntensity * 30) + 1);
+        if (kernelSize % 2 == 0) kernelSize++;
+        
+        Mat result = new Mat();
+        
+        switch (direction.toLowerCase()) {
+            case "horizontal":
+            case "left":
+            case "right":
+                // Horizontal motion blur
+                GaussianBlur(frame, result, new Size(kernelSize, 1), 0);
+                break;
+            case "vertical":
+            case "up":
+            case "down":
+                // Vertical motion blur
+                GaussianBlur(frame, result, new Size(1, kernelSize), 0);
+                break;
+            default:
+                // Default to horizontal
+                GaussianBlur(frame, result, new Size(kernelSize, 1), 0);
+                break;
+        }
+        
+        return result;
     }
 
     /**

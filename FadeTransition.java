@@ -48,18 +48,19 @@ public class FadeTransition extends BaseTransition {
     }
     
     /**
-     * Crossfade effect - smooth blend between two frames
+     * Crossfade effect - smooth blend between two frames with enhanced blending
      */
     private Mat crossfade(Mat frame1, Mat frame2, double progress) {
         double alpha = easeInOut(progress);
-        return VideoProcessor.blendFrames(frame1, frame2, alpha);
+        return VideoProcessor.blendFramesSmooth(frame1, frame2, alpha);
     }
     
     /**
-     * Dissolve effect - similar to crossfade but with different easing
+     * Dissolve effect - enhanced with smooth cosine interpolation
      */
     private Mat dissolve(Mat frame1, Mat frame2, double progress) {
-        // Use linear progress for dissolve effect
-        return VideoProcessor.blendFrames(frame1, frame2, progress);
+        // Apply smooth cosine interpolation for natural-looking fades
+        double smoothProgress = (1 - Math.cos(progress * Math.PI)) / 2;
+        return VideoProcessor.blendFramesSmooth(frame1, frame2, progress);
     }
 }

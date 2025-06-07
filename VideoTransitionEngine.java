@@ -220,6 +220,13 @@ public class VideoTransitionEngine {
             case PIXELATE_TRANSITION:
                 return new EffectTransition(outputWidth, outputHeight, transitionFrames, type);
 
+            // Whip Pan transitions with motion blur
+            case WHIP_PAN_LEFT:
+            case WHIP_PAN_RIGHT:
+            case WHIP_PAN_UP:
+            case WHIP_PAN_DOWN:
+                return new WhipPanTransition(outputWidth, outputHeight, transitionFrames, type);
+
             // AI-Powered Object-Aware Transitions
             case OBJECT_REVEAL:
             case OBJECT_ZOOM_IN:
